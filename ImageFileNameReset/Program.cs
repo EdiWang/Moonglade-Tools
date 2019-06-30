@@ -110,8 +110,8 @@ namespace ImageFileNameReset
                                     int rows = await conn.ExecuteAsync(sqlUpdate,
                                         new
                                         {
-                                            oldFileName = img.FileName,
-                                            newFileName,
+                                            oldFileName = "/" + img.FileName,
+                                            newFileName = "/" + newFileName,
                                             postId = pi.Id
                                         });
 
