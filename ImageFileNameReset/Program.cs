@@ -85,7 +85,12 @@ namespace ImageFileNameReset
                                                          WHERE p.PostContent LIKE '%' + @oldFileName + '%'";
 
                             var pi = await conn.QueryFirstOrDefaultAsync<BlogPostInfo>(sqlFindInfo, new { oldFileName = img.FileName });
-                            if (null != pi)
+                            if (null == pi)
+                            {
+                                WriteMessage(
+                                    $"Image file '{img.FileName}' seems not used in any post. Please consider delete it.");
+                            }
+                            else
                             {
                                 WriteMessage($"Found refrencing post '{pi.Title}' (Id: {pi.Id})");
 
@@ -93,7 +98,8 @@ namespace ImageFileNameReset
                                 var newFileName = gen.GetFileName(img.FileName);
 
                                 WriteMessage($"Renaming {img.FileName} to {newFileName}.");
-                                _logger.Info($"Renaming {img.FileName} to {newFileName} in refrencing post '{pi.Title}' with Id: '{pi.Id}'");
+                                _logger.Info(
+                                    $"Renaming {img.FileName} to {newFileName} in refrencing post '{pi.Title}' with Id: '{pi.Id}'");
 
                                 try
                                 {
@@ -124,7 +130,8 @@ namespace ImageFileNameReset
                                             WriteErrorMessage(e.Message);
 
                                             // Roll back SQL changes
-                                            WriteMessage("Azure Blob renaming blow up, roll back database changes.", ConsoleColor.DarkYellow);
+                                            WriteMessage("Azure Blob renaming blow up, roll back database changes.",
+                                                ConsoleColor.DarkYellow);
                                             int rollbackRows = await conn.ExecuteAsync(sqlUpdate, new
                                             {
                                                 oldFileName = newFileName,
@@ -133,7 +140,8 @@ namespace ImageFileNameReset
                                             });
                                             WriteMessage($"{rollbackRows} row(s) updated.");
 
-                                            _logger.Warn($"Rollback renaming for {img.FileName} to {newFileName}. {rollbackRows} row(s) updated.");
+                                            _logger.Warn(
+                                                $"Rollback renaming for {img.FileName} to {newFileName}. {rollbackRows} row(s) updated.");
                                         }
                                     }
                                 }
