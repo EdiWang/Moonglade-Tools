@@ -6,6 +6,8 @@ using CommandLine;
 using Dapper;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Blob;
+using NLog;
+using NLog.Config;
 
 namespace ImageFileNameReset
 {
@@ -31,8 +33,13 @@ namespace ImageFileNameReset
     {
         public static Options Options { get; set; }
 
+        private static Logger _logger;
+
         static async Task Main(string[] args)
         {
+            LogManager.Configuration = new XmlLoggingConfiguration($@"{AppContext.BaseDirectory}\nlog.config");
+            _logger = LogManager.GetCurrentClassLogger();
+
             var parserResult = Parser.Default.ParseArguments<Options>(args);
             if (parserResult.Tag == ParserResultType.Parsed)
             {
@@ -43,7 +50,7 @@ namespace ImageFileNameReset
                 var blobClient = storageAccount.CreateCloudBlobClient();
                 var container = blobClient.GetContainerReference(Options.AzBlobContainerName);
 
-                WriteMessage($"[OK] Connected to Azure Blob Storage '{storageAccount.Credentials.AccountName}' with container '{Options.AzBlobContainerName}'.", ConsoleColor.Green);
+                WriteMessage($"Using Azure Blob Storage '{storageAccount.Credentials.AccountName}' with container '{Options.AzBlobContainerName}'.", ConsoleColor.Green);
 
                 WriteMessage("Getting image file list...");
                 var blobs = await container.ListBlobsSegmentedAsync(null);
@@ -60,10 +67,13 @@ namespace ImageFileNameReset
 
                 WriteMessage($"Found {blobImages.Count} image file(s).", ConsoleColor.Yellow);
 
+                _logger.Info($"Found {blobImages.Count} image file(s) on Azure Blob Storage '{storageAccount.Credentials.AccountName}' with container '{Options.AzBlobContainerName}'");
+
                 var imagesToBeRenamed = blobImages.Where(b => !b.FileName.StartsWith("img-")).ToList();
                 if (imagesToBeRenamed.Any())
                 {
                     WriteMessage($"Found {imagesToBeRenamed.Count} image file(s) with non-standard names.", ConsoleColor.Yellow);
+                    _logger.Info($"Found {imagesToBeRenamed.Count} image file(s) with non-standard names.");
 
                     using (var conn = new SqlConnection(Options.SqlSeverConnectionString))
                     {
@@ -83,6 +93,7 @@ namespace ImageFileNameReset
                                 var newFileName = gen.GetFileName(img.FileName);
 
                                 WriteMessage($"Renaming {img.FileName} to {newFileName}.");
+                                _logger.Info($"Renaming {img.FileName} to {newFileName} in refrencing post '{pi.Title}' with Id: '{pi.Id}'");
 
                                 try
                                 {
@@ -105,10 +116,12 @@ namespace ImageFileNameReset
                                             // 2. Update Blob only SQL operation is successful.
                                             await RenameAsync(container, img.FileName, newFileName);
                                             itemsRenamed++;
+
+                                            _logger.Info($"Renamed {img.FileName} to {newFileName}.");
                                         }
                                         catch (Exception e)
                                         {
-                                            WriteMessage(e.Message, ConsoleColor.Red);
+                                            WriteErrorMessage(e.Message);
 
                                             // Roll back SQL changes
                                             WriteMessage("Azure Blob renaming blow up, roll back database changes.", ConsoleColor.DarkYellow);
@@ -119,12 +132,14 @@ namespace ImageFileNameReset
                                                 postId = pi.Id
                                             });
                                             WriteMessage($"{rollbackRows} row(s) updated.");
+
+                                            _logger.Warn($"Rollback renaming for {img.FileName} to {newFileName}. {rollbackRows} row(s) updated.");
                                         }
                                     }
                                 }
                                 catch (Exception e)
                                 {
-                                    WriteMessage(e.Message, ConsoleColor.Red);
+                                    WriteErrorMessage(e.Message);
                                 }
                             }
                         }
@@ -156,8 +171,14 @@ namespace ImageFileNameReset
             }
             catch (Exception e)
             {
-                WriteMessage(e.Message, ConsoleColor.Red);
+                WriteErrorMessage(e.Message);
             }
+        }
+
+        static void WriteErrorMessage(string message)
+        {
+            _logger.Error(message);
+            WriteMessage(message, ConsoleColor.Red);
         }
 
         static void WriteMessage(string message, ConsoleColor color = ConsoleColor.White, bool resetColor = true)
