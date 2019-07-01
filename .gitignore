@@ -261,3 +261,4 @@ __pycache__/
 *.pyc
 
 ImageFileNameReset/Properties/launchSettings.json
+ImageUrlCheck/Properties/launchSettings.json
