@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -8,6 +7,7 @@ using System.Threading.Tasks;
 using System.Web;
 using CommandLine;
 using Dapper;
+using Microsoft.Data.SqlClient;
 using NLog;
 using NLog.Config;
 
