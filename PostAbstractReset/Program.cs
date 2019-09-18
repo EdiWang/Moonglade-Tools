@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Web;
-using System.Data.SqlClient;
 using CommandLine;
 using Dapper;
 using System.Linq;
+using Microsoft.Data.SqlClient;
 
 namespace PostAbstractReset
 {
