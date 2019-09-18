@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using CommandLine;
 using Dapper;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Blob;
+using Microsoft.Data.SqlClient;
 using NLog;
 using NLog.Config;
 
