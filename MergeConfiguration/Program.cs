@@ -79,8 +79,9 @@ namespace MergeConfiguration
                         await conn.ExecuteAsync(sql3, new { CfgValue = mergedJson });
 
                         // 3. Delete BlogOwnerSettings row
-                        var sqlDeleteRow = "DELETE FROM BlogConfiguration WHERE CfgKey = 'BlogOwnerSettings'";
-                        await conn.ExecuteAsync(sqlDeleteRow);
+                        // comment out for backward compability
+                        // var sqlDeleteRow = "DELETE FROM BlogConfiguration WHERE CfgKey = 'BlogOwnerSettings'";
+                        // await conn.ExecuteAsync(sqlDeleteRow);
                     }
                 }
 
