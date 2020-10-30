@@ -5,6 +5,7 @@ using CommandLine;
 using Dapper;
 using System.Linq;
 using Microsoft.Data.SqlClient;
+using NUglify;
 
 namespace PostAbstractReset
 {
@@ -73,13 +74,22 @@ namespace PostAbstractReset
             return result;
         }
 
-        static string RemoveTags(string html, bool htmlDecode = false)
+        static string RemoveTags(string html)
         {
             if (string.IsNullOrEmpty(html))
             {
                 return string.Empty;
             }
 
+            var result = Uglify.HtmlToText(html);
+
+            return !result.HasErrors && !string.IsNullOrWhiteSpace(result.Code)
+                ? result.Code.Trim() 
+                : RemoveTagsBackup(html);
+        }
+
+        static string RemoveTagsBackup(string html)
+        {
             var result = new char[html.Length];
 
             var cursor = 0;
@@ -104,14 +114,8 @@ namespace PostAbstractReset
 
             var stringResult = new string(result, 0, cursor);
 
-            if (htmlDecode)
-            {
-                stringResult = HttpUtility.HtmlDecode(stringResult);
-            }
-
-            return stringResult;
+            return stringResult.Replace("&nbsp;", " ");
         }
-
     }
 
     public static class StringExtensions
