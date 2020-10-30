@@ -2,7 +2,7 @@
   "profiles": {
     "PostAbstractReset": {
       "commandName": "Project",
-      "commandLineArgs": "-c \"Server=tcp:ediwangsql01.database.windows.net,1433;Database=ediwangblogdb;User ID=Edi@ediwangsql01;Password=@zure4Ever;Trusted_Connection=False;Encrypt=True;Connection Timeout=30;\" -w 400"
+      "commandLineArgs": "-c \"Server=;\" -w 400"
     }
   }
 }
